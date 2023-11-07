@@ -1,4 +1,6 @@
-import { OrbitControls } from "./lib/OrbitControls.js";
+import { OrbitControls } from './lib/OrbitControls.js';
+import { FBXLoader } from './jsm/loaders/FBXLoader.js';
+import Stats from './jsm/libs/stats.module.js';
 
 window.onload = function init() {
     let rot = 0; // 각도
