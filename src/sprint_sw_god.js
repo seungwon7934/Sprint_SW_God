@@ -1,8 +1,6 @@
 import * as THREE from 'three';
-import { OrbitControls } from './lib/OrbitControls.js';
-import { FBXLoader } from './jsm/loaders/FBXLoader.js';
-import Stats from './jsm/libs/stats.module.js';
-
+import { OrbitControls } from '../src/jsm/controls/OrbitControls.js';
+import { FBXLoader } from '../examples/jsm/loaders/FBXLoader.js';
 
 const clock = new THREE.Clock();
 
@@ -66,7 +64,7 @@ function init() {
 
     // 모델 호출
     const loader = new FBXLoader();
-    loader.load('models/fbx/Running (2).fbx', function (object) {
+    loader.load('models/fbx/Jump.fbx', function (object) {
         object.position.set(0, 0.5, 0);
         object.scale.set(0.01, 0.01, 0.01);
 
