@@ -6,7 +6,6 @@ import Stats from './jsm/libs/stats.module.js';
 
 const clock = new THREE.Clock();
 
-
 // 모델 자연스러운 좌우 움직임을 위한 변수
 let lastUpdateTime = 0;
 const updateInterval = 1; // 1초
@@ -28,8 +27,8 @@ animate();
 function init() {
     let rot = 0; // 각도
 
-    const container = document.createElement( 'div' );
-				document.body.appendChild( container );
+    const container = document.createElement('div');
+    document.body.appendChild(container);
     const canvas = document.getElementById("canvas");
     // Renderer
     const renderer = new THREE.WebGLRenderer({
@@ -41,18 +40,18 @@ function init() {
     const scene = new THREE.Scene();
 
 
-    const hemiLight = new THREE.HemisphereLight( 0xffffff, 0x444444, 5 );
-				hemiLight.position.set( 0, 200, 0 );
-				scene.add( hemiLight );
+    const hemiLight = new THREE.HemisphereLight(0xffffff, 0x444444, 5);
+    hemiLight.position.set(0, 200, 0);
+    scene.add(hemiLight);
 
-				const dirLight = new THREE.DirectionalLight( 0xffffff, 5 );
-				dirLight.position.set( 0, 200, 100 );
-				dirLight.castShadow = true;
-				dirLight.shadow.camera.top = 180;
-				dirLight.shadow.camera.bottom = - 100;
-				dirLight.shadow.camera.left = - 120;
-				dirLight.shadow.camera.right = 120;
-				scene.add( dirLight );
+    const dirLight = new THREE.DirectionalLight(0xffffff, 5);
+    dirLight.position.set(0, 200, 100);
+    dirLight.castShadow = true;
+    dirLight.shadow.camera.top = 180;
+    dirLight.shadow.camera.bottom = - 100;
+    dirLight.shadow.camera.left = - 120;
+    dirLight.shadow.camera.right = 120;
+    scene.add(dirLight);
 
     // Fog - 있으나 없으나 무방하나 일단 유지
     // scene.fog = new THREE.Fog(0xaaaaaa, 50, 2000);
@@ -67,24 +66,24 @@ function init() {
 
     // 모델 호출
     const loader = new FBXLoader();
-    loader.load( 'models/fbx/Running.fbx', function ( object ) {
+    loader.load('models/fbx/Running.fbx', function (object) {
         object.position.set(0, 0.5, 0);
         object.scale.set(0.01, 0.01, 0.01);
-   
-        object.rotation.y = -7.8;
-        mixer = new THREE.AnimationMixer( object );
 
-        const action = mixer.clipAction( object.animations[ 0 ] );
+        object.rotation.y = -7.8;
+        mixer = new THREE.AnimationMixer(object);
+
+        const action = mixer.clipAction(object.animations[0]);
         action.play();
 
 
         player = object;
         scene.add(player);
 
-    } );
+    });
 
     // 키보드 좌, 우, 윗방향키 클릭 시 모델 위치 수정을 위한 이벤트 리시너
-    document.addEventListener('keydown', function(event) {
+    document.addEventListener('keydown', function (event) {
         if (event.keyCode === 37) game.input.left = true;
         if (event.keyCode === 39) game.input.right = true;
         if (event.keyCode === 38) {
@@ -92,7 +91,7 @@ function init() {
         }
     });
 
-    document.addEventListener('keyup', function(event) {
+    document.addEventListener('keyup', function (event) {
         if (event.keyCode === 37) game.input.left = false;
         if (event.keyCode === 39) game.input.right = false;
     });
@@ -126,23 +125,23 @@ function init() {
         vertices[offset + 2] = z;
     }
 
-geometry.setAttribute('position', new THREE.BufferAttribute(vertices, 3));
+    geometry.setAttribute('position', new THREE.BufferAttribute(vertices, 3));
 
-    const boxGeomtery = new THREE.BoxGeometry(100, 1, 5);
-
+    const RoadGeomtery = new THREE.BoxGeometry(100, 1, 5);
     // Meterial
     const material = new THREE.PointsMaterial({
         color: 0xffffff
     });
 
-    const boxMeterial = new THREE.MeshBasicMaterial({ color: 'white' });
+    const RoadMeterial = new THREE.MeshBasicMaterial({ color: 'white' });
 
     // Mesh and Add to Camera
     const starField = new THREE.Points(geometry, material);
     scene.add(starField);
 
-    const boxMesh = new THREE.Mesh(boxGeomtery, boxMeterial);
-    scene.add(boxMesh);
+    const roadMesh = new THREE.Mesh(RoadGeomtery, RoadMeterial);
+    roadMesh.position.x = -50;
+    scene.add(roadMesh);
 
     // AxesHelper - xyz축 표시
     const axexHelper = new THREE.AxesHelper(4);
@@ -170,10 +169,10 @@ geometry.setAttribute('position', new THREE.BufferAttribute(vertices, 3));
 
         // 눈 - Mesh가 움직임
         starField.position.y = 9500 * Math.cos(radian / 4 % Math.PI);
-        
+
         // 우주여행
         // starField.position.x = -9500 * Math.cos(radian / 4 % Math.PI);
-        
+
         updatePlayer();
 
         // 렌더링
@@ -194,7 +193,7 @@ geometry.setAttribute('position', new THREE.BufferAttribute(vertices, 3));
         renderer.setPixelRatio(window.devicePixelRatio);
         renderer.setSize(width, height);
 
- 
+
         // 카메라에서의 비율 조정
         camera.aspect = width / height;
         camera.updateProjectionMatrix();
@@ -202,7 +201,7 @@ geometry.setAttribute('position', new THREE.BufferAttribute(vertices, 3));
 
     // 초기화
     onResize();
-}  
+}
 
 
 
@@ -212,10 +211,10 @@ function updatePlayer(currentTime) {
         lastUpdateTime = currentTime;
 
         if (game.input.right) {
-            if (player.position.z > -1) player.position.z -= 1;
+            if (player.position.z > -2) player.position.z -= 0.1;
             // player.rotation.y = 0.05;
         } else if (game.input.left) {
-            if (player.position.z < 1) player.position.z += 1;
+            if (player.position.z < 2) player.position.z += 0.1;
             // player.rotation.y = -0.05;
         }
     }
@@ -227,7 +226,7 @@ function updatePlayer(currentTime) {
 // 자연스러운 좌우 이동 (작동에 문제는 없지만, 콘솔에 에러가 떠서 임시 주석처리, 최종본에 이 코드를 사용했을 때 이상 없으면 수정 예정)
 // function updatePlayer(currentTime) {
 
-    
+
 //     if (currentTime - lastUpdateTime >= updateInterval) {
 //          targetZ = player.position.z; // 목표 위치
 //          currentZ = player.position.z;
@@ -256,8 +255,9 @@ function updatePlayer(currentTime) {
 
 // requestAnimationFrame(updatePlayer);
 
+
 // 모델 점프 코드
-function jumpPlayer(){
+function jumpPlayer() {
     var initialY = player.position.y;
     var jumpHeight = 3;
     var jumpDuration = 1000; // 1 second (you can adjust this as needed)
@@ -284,12 +284,15 @@ function jumpPlayer(){
 // 모델 애니메이션 작동을 위한 함수
 function animate() {
 
-    requestAnimationFrame( animate );
-
     const delta = clock.getDelta();
-
-    if ( mixer ) mixer.update( delta );
-
     
+    if (mixer) mixer.update(delta);
+
+    // 도로 움직이는 애니메이션 - 작동 안됨
+    
+    // const elapsedTime = clock.getElapsedTime();
+    // if(roadMesh) roadMesh.rotation.x = elapsedTime * Math.PI * 0.25;
+
+    requestAnimationFrame(animate);
 
 }
