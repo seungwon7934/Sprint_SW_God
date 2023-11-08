@@ -12,7 +12,7 @@ const movementSpeed = 0.05;
 
 
 
-
+var targetZ, currentZ;
 let mixer;
 
 var player;
@@ -87,7 +87,7 @@ function init() {
         if (event.keyCode === 37) game.input.left = true;
         if (event.keyCode === 39) game.input.right = true;
         if (event.keyCode === 38) {
-            if (player.position.y == height) jumpPlayer();
+            if (player.position.y == 0.5) jumpPlayer();
         }
     });
 
@@ -206,56 +206,77 @@ geometry.setAttribute('position', new THREE.BufferAttribute(vertices, 3));
 
 
 
-// function updatePlayer(currentTime) {
-//     if (currentTime - lastUpdateTime >= updateInterval) {
-//         lastUpdateTime = currentTime;
-
-//         if (game.input.right) {
-//             if (player.position.z > -1) player.position.z -= 1;
-//             // player.rotation.y = 0.05;
-//         } else if (game.input.left) {
-//             if (player.position.z < 1) player.position.z += 1;
-//             // player.rotation.y = -0.05;
-//         }
-//     }
-//     requestAnimationFrame(updatePlayer);
-
-// }
-
-
-
 function updatePlayer(currentTime) {
-
-    
     if (currentTime - lastUpdateTime >= updateInterval) {
-        let targetZ = player.position.z; // 목표 위치
-        let currentZ = player.position.z;
         lastUpdateTime = currentTime;
 
-        if (game.input.right && targetZ > -1.5) {
-            targetZ -= movementSpeed;
-        } else if (game.input.left && targetZ < 1.5) {
-            targetZ += movementSpeed;
+        if (game.input.right) {
+            if (player.position.z > -1) player.position.z -= 1;
+            // player.rotation.y = 0.05;
+        } else if (game.input.left) {
+            if (player.position.z < 1) player.position.z += 1;
+            // player.rotation.y = -0.05;
         }
-
-        // 서서히 위치를 변경
-        if (currentZ < targetZ) {
-            currentZ = Math.min(currentZ + movementSpeed, targetZ);
-        } else if (currentZ > targetZ) {
-            currentZ = Math.max(currentZ - movementSpeed, targetZ);
-        }
-
-        player.position.z = currentZ;
-        // player.rotation.y = 0.05;
     }
-
-    // 다음 프레임을 요청
     requestAnimationFrame(updatePlayer);
+
 }
 
-requestAnimationFrame(updatePlayer);
 
 
+// function updatePlayer(currentTime) {
+
+    
+//     if (currentTime - lastUpdateTime >= updateInterval) {
+//          targetZ = player.position.z; // 목표 위치
+//          currentZ = player.position.z;
+//         lastUpdateTime = currentTime;
+
+//         if (game.input.right && targetZ > -1.5) {
+//             targetZ -= 1.5;
+//         } else if (game.input.left && targetZ < 1.5) {
+//             targetZ += 1.5;
+//         }
+
+//         // 서서히 위치를 변경
+//         if (currentZ < targetZ) {
+//             currentZ = Math.min(currentZ + movementSpeed, targetZ);
+//         } else if (currentZ > targetZ) {
+//             currentZ = Math.max(currentZ - movementSpeed, targetZ);
+//         }
+
+//         player.position.z = currentZ;
+//         // player.rotation.y = 0.05;
+//     }
+
+//     // 다음 프레임을 요청
+//     requestAnimationFrame(updatePlayer);
+// }
+
+// requestAnimationFrame(updatePlayer);
+
+function jumpPlayer(){
+    var initialY = player.position.y;
+    var jumpHeight = 3;
+    var jumpDuration = 1000; // 1 second (you can adjust this as needed)
+    var startTime = Date.now();
+
+    function animateJump() {
+        var currentTime = Date.now();
+        var elapsed = currentTime - startTime;
+        if (elapsed < jumpDuration) {
+            // Calculate the new Y position
+            var newY = initialY + (Math.sin((elapsed / jumpDuration) * Math.PI) * jumpHeight);
+            player.position.y = newY;
+            requestAnimationFrame(animateJump);
+        } else {
+            // Jump animation is complete, reset the player's Y position
+            player.position.y = initialY;
+        }
+    }
+
+    animateJump();
+}
 
 function animate() {
 
