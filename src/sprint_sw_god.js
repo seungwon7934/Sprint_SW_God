@@ -6,9 +6,22 @@ import Stats from './jsm/libs/stats.module.js';
 
 const clock = new THREE.Clock();
 
+let lastUpdateTime = 0;
+const updateInterval = 1; // 1초
+const movementSpeed = 0.05;
+
+
+
+
 let mixer;
 
+var player;
 
+
+
+var game = {
+    input: { left: false, right: false }
+};
 
 init();
 animate();
@@ -57,7 +70,7 @@ function init() {
     loader.load( 'models/fbx/Running.fbx', function ( object ) {
         object.position.set(0, 0.5, 0);
         object.scale.set(0.01, 0.01, 0.01);
-
+   
         object.rotation.y = -7.8;
         mixer = new THREE.AnimationMixer( object );
 
@@ -65,9 +78,23 @@ function init() {
         action.play();
 
 
-        scene.add( object );
+        player = object;
+        scene.add(player);
 
     } );
+
+    document.addEventListener('keydown', function(event) {
+        if (event.keyCode === 37) game.input.left = true;
+        if (event.keyCode === 39) game.input.right = true;
+        if (event.keyCode === 38) {
+            if (player.position.y == height) jumpPlayer();
+        }
+    });
+
+    document.addEventListener('keyup', function(event) {
+        if (event.keyCode === 37) game.input.left = false;
+        if (event.keyCode === 39) game.input.right = false;
+    });
 
     // Geometry
     // const geometry = new THREE.Geometry();
@@ -81,6 +108,7 @@ function init() {
 
     //     geometry.vertices.push(star)
     // }
+
 
     const geometry = new THREE.BufferGeometry();
     const vertices = new Float32Array(40000 * 3);
@@ -145,6 +173,8 @@ geometry.setAttribute('position', new THREE.BufferAttribute(vertices, 3));
         // 우주여행
         // starField.position.x = -9500 * Math.cos(radian / 4 % Math.PI);
         
+        updatePlayer();
+
         // 렌더링
         renderer.render(scene, camera);
         requestAnimationFrame(render);
@@ -163,7 +193,7 @@ geometry.setAttribute('position', new THREE.BufferAttribute(vertices, 3));
         renderer.setPixelRatio(window.devicePixelRatio);
         renderer.setSize(width, height);
 
-
+ 
         // 카메라에서의 비율 조정
         camera.aspect = width / height;
         camera.updateProjectionMatrix();
@@ -171,7 +201,61 @@ geometry.setAttribute('position', new THREE.BufferAttribute(vertices, 3));
 
     // 초기화
     onResize();
+}  
+
+
+
+
+// function updatePlayer(currentTime) {
+//     if (currentTime - lastUpdateTime >= updateInterval) {
+//         lastUpdateTime = currentTime;
+
+//         if (game.input.right) {
+//             if (player.position.z > -1) player.position.z -= 1;
+//             // player.rotation.y = 0.05;
+//         } else if (game.input.left) {
+//             if (player.position.z < 1) player.position.z += 1;
+//             // player.rotation.y = -0.05;
+//         }
+//     }
+//     requestAnimationFrame(updatePlayer);
+
+// }
+
+
+
+function updatePlayer(currentTime) {
+
+    
+    if (currentTime - lastUpdateTime >= updateInterval) {
+        let targetZ = player.position.z; // 목표 위치
+        let currentZ = player.position.z;
+        lastUpdateTime = currentTime;
+
+        if (game.input.right && targetZ > -1.5) {
+            targetZ -= movementSpeed;
+        } else if (game.input.left && targetZ < 1.5) {
+            targetZ += movementSpeed;
+        }
+
+        // 서서히 위치를 변경
+        if (currentZ < targetZ) {
+            currentZ = Math.min(currentZ + movementSpeed, targetZ);
+        } else if (currentZ > targetZ) {
+            currentZ = Math.max(currentZ - movementSpeed, targetZ);
+        }
+
+        player.position.z = currentZ;
+        // player.rotation.y = 0.05;
+    }
+
+    // 다음 프레임을 요청
+    requestAnimationFrame(updatePlayer);
 }
+
+requestAnimationFrame(updatePlayer);
+
+
 
 function animate() {
 
