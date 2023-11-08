@@ -60,9 +60,9 @@ function init() {
     const camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight);
 
     // Camera start position - 출발 지점
-    camera.position.x = 60;
+    camera.position.x = 20;
     camera.position.z = 0;
-    camera.position.y = 10;
+    camera.position.y = 5;
 
     // 모델 호출
     const loader = new FBXLoader();
@@ -210,6 +210,7 @@ function updatePlayer(currentTime) {
     if (currentTime - lastUpdateTime >= updateInterval) {
         lastUpdateTime = currentTime;
 
+        // 23/11/08 - 좌우 범위 증가 + 좌우 이동시 부드럽게 이동
         if (game.input.right) {
             if (player.position.z > -2) player.position.z -= 0.1;
             // player.rotation.y = 0.05;
