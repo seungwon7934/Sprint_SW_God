@@ -6,17 +6,16 @@ import Stats from './jsm/libs/stats.module.js';
 
 const clock = new THREE.Clock();
 
+
+// 모델 자연스러운 좌우 움직임을 위한 변수
 let lastUpdateTime = 0;
 const updateInterval = 1; // 1초
 const movementSpeed = 0.05;
-
-
-
 var targetZ, currentZ;
+
 let mixer;
 
 var player;
-
 
 
 var game = {
@@ -66,6 +65,7 @@ function init() {
     camera.position.z = 0;
     camera.position.y = 10;
 
+    // 모델 호출
     const loader = new FBXLoader();
     loader.load( 'models/fbx/Running.fbx', function ( object ) {
         object.position.set(0, 0.5, 0);
@@ -83,6 +83,7 @@ function init() {
 
     } );
 
+    // 키보드 좌, 우, 윗방향키 클릭 시 모델 위치 수정을 위한 이벤트 리시너
     document.addEventListener('keydown', function(event) {
         if (event.keyCode === 37) game.input.left = true;
         if (event.keyCode === 39) game.input.right = true;
@@ -205,7 +206,7 @@ geometry.setAttribute('position', new THREE.BufferAttribute(vertices, 3));
 
 
 
-
+// 뚝뚝 끊기는 좌우 이동
 function updatePlayer(currentTime) {
     if (currentTime - lastUpdateTime >= updateInterval) {
         lastUpdateTime = currentTime;
@@ -223,7 +224,7 @@ function updatePlayer(currentTime) {
 }
 
 
-
+// 자연스러운 좌우 이동 (작동에 문제는 없지만, 콘솔에 에러가 떠서 임시 주석처리, 최종본에 이 코드를 사용했을 때 이상 없으면 수정 예정)
 // function updatePlayer(currentTime) {
 
     
@@ -255,6 +256,7 @@ function updatePlayer(currentTime) {
 
 // requestAnimationFrame(updatePlayer);
 
+// 모델 점프 코드
 function jumpPlayer(){
     var initialY = player.position.y;
     var jumpHeight = 3;
@@ -278,6 +280,8 @@ function jumpPlayer(){
     animateJump();
 }
 
+
+// 모델 애니메이션 작동을 위한 함수
 function animate() {
 
     requestAnimationFrame( animate );
