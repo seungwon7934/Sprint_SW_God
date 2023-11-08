@@ -66,7 +66,7 @@ function init() {
 
     // 모델 호출
     const loader = new FBXLoader();
-    loader.load('models/fbx/Running.fbx', function (object) {
+    loader.load('models/fbx/Running (2).fbx', function (object) {
         object.position.set(0, 0.5, 0);
         object.scale.set(0.01, 0.01, 0.01);
 
