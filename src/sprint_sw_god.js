@@ -6,7 +6,8 @@ import Stats from './jsm/libs/stats.module.js';
 // 코드 구조
 // init() -> function init() 실행
 // function init() 구조
-// 변수 (시간, 모델 움직임, 캔버스, 렌더링, Scene, Light, Camera, Geometry, material, Mesh)
+// 변수 (시간, 모델 움직임, 캔버스, 렌더링, Scene, Light, Camera, 
+// Geometry, material, Mesh, Audio)
 // 모델 오브젝트 호출
 // 이벤트 리스너 (창 크기조절, 좌우&위 방향키)
 // 함수 (render, 모델 애니메이션, Mesh 애니메이션, 모델 좌우 방향, 점프)
@@ -62,7 +63,6 @@ function init() {
 
     // Camera 변수
     const camera = new THREE.PerspectiveCamera(90, window.innerWidth / window.innerHeight, 1, 1000);
-
     // Camera 위치 조정
     camera.position.x = 5;
     camera.position.z = 0;
@@ -72,7 +72,7 @@ function init() {
     // const geometry = new THREE.Geometry();
 
     // for (let i = 0; i < 40000; i++) {
-        //     const star = new THREE.Vector3();
+    //     const star = new THREE.Vector3();
     //     // 눈) x : 2000, y : 20000, 우주 여행) x : 20000, y : 2000
     //     star.x = THREE.Math.randFloatSpread(2000);
     //     star.y = THREE.Math.randFloatSpread(20000);
@@ -84,7 +84,7 @@ function init() {
     // Star Object
     const starGeometry = new THREE.BufferGeometry();
     const starVertices = new Float32Array(40000 * 3);
-    
+
     for (let i = 0; i < 20000; i++) {
 
         const x = THREE.MathUtils.randFloatSpread(1000);
@@ -92,7 +92,7 @@ function init() {
         const z = THREE.MathUtils.randFloatSpread(1000);
 
         const offset = i * 3;
-        
+
         starVertices[offset] = x;
         starVertices[offset + 1] = y;
         starVertices[offset + 2] = z;
@@ -102,41 +102,62 @@ function init() {
     const material = new THREE.PointsMaterial({
         color: 0xffffff
     });
+    const starField = new THREE.Points(starGeometry, material);
 
     // Road Object - 모델이 약 2분동안 달릴수 있게 설정
     const RoadGeomtery = new THREE.BoxGeometry(2000, 1, 10);
     const RoadMeterial = new THREE.MeshBasicMaterial({ color: 'white' });
     const roadMesh = new THREE.Mesh(RoadGeomtery, RoadMeterial);
     roadMesh.position.x = -999;
-    
+
     // Add to camera
-    const starField = new THREE.Points(starGeometry, material);
     scene.add(starField);
     scene.add(roadMesh);
 
     // AxesHelper - xyz축 표시, 실제 영상에서는 제외
     const axexHelper = new THREE.AxesHelper(4);
     scene.add(axexHelper)
-    
+
     // OrbitControls - 카메라 위치, 각도 조정 (마우스)
     const orbitControls = new OrbitControls(camera, canvas);
-    
+    // 사용자가 카메라 임의로 수정 금지
+    orbitControls.enableRotate = false;
+    orbitControls.enableZoom = false;
+    orbitControls.enablePan = false;
+
+    // AudioListener를 생성하여 카메라에 추가
+    const listener = new THREE.AudioListener();
+    camera.add(listener);
+
+    // 글로벌 오디오 소스 생성
+    const sound = new THREE.Audio(listener);
+
+    // 사운드를 로드하고 오디오 객체의 버퍼로 설정
+    const audioLoader = new THREE.AudioLoader();
+    audioLoader.load('./src/sounds/Duggy-Colors.ogg', function (buffer) {
+        sound.setBuffer(buffer);
+        sound.setLoop(true);
+        sound.setVolume(0.25);
+        sound.play();
+    });
+
+
     // 모델 호출
     const loader = new FBXLoader();
     loader.load('models/fbx/Running (2).fbx', function (object) {
         object.position.set(0, 0.5, 0);
         object.scale.set(0.01, 0.01, 0.01);
-        
+
         object.rotation.y = -7.8;
         mixer = new THREE.AnimationMixer(object);
-        
+
         const action = mixer.clipAction(object.animations[0]);
         action.play();
-        
+
         player = object;
         scene.add(player);
     });
-    
+
     // 키보드 좌, 우, 윗방향키 클릭 시 모델 위치 수정을 위한 이벤트 리스너
     document.addEventListener('keydown', function (event) {
         if (event.keyCode === 37) game.input.left = true;
@@ -186,14 +207,15 @@ function init() {
         // camera.lookAt(new THREE.Vector3(0.0, 0.0, 0.0))
 
         // 카메라 시점 변환 업데이트
-        orbitControls.update()
+        orbitControls.update();
 
         // 눈 - Mesh가 움직임, 약 2분가량 동작 후 재시작
         starField.position.y = 9500 * Math.cos(radian / 4 % Math.PI);
 
         // 우주여행
         // starField.position.x = -9500 * Math.cos(radian / 4 % Math.PI);
-
+        
+        camera.lookAt(new THREE.Vector3(-2, 7, 0));
         updatePlayer();
 
         // 렌더링
@@ -202,25 +224,37 @@ function init() {
     }
     render();
 
+    var x;
     // 모델 애니메이션 작동을 위한 함수
     function animate() {
         const delta = clock.getDelta();
         if (mixer) mixer.update(delta);
 
         renderer.render(scene, camera);
-        requestAnimationFrame(animate);
+        x = requestAnimationFrame(animate);
+        
+        // road x좌표가 1000이상 증가시 모델 정지
+        if(roadMesh.position.x > 1000)
+        cancelAnimationFrame(x);
     }
     animate()
 
+    var id;
     // Mesh 애니메이션 함수
     function meshAnimate() {
 
+        
         // 도로 움직이는 애니메이션
         const elapsedTime = clock.getElapsedTime();
         roadMesh.position.x += elapsedTime * 0.01;
-        camera.lookAt(new THREE.Vector3(-2, 7, 0));
+        console.log(roadMesh.position.x);
         renderer.render(scene, camera);
-        requestAnimationFrame(meshAnimate);
+
+        id = requestAnimationFrame(meshAnimate);
+
+        // 1000이상 증가시 mesh 정지
+        if(roadMesh.position.x > 1000)
+            cancelAnimationFrame(id);
     }
     meshAnimate();
 
