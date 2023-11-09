@@ -62,7 +62,7 @@ function init() {
     scene.add(dirLight);
 
     // Camera 변수
-    const camera = new THREE.PerspectiveCamera(90, window.innerWidth / window.innerHeight, 1, 1000);
+    const camera = new THREE.PerspectiveCamera(90, window.innerWidth / window.innerHeight, 1, 500);
     // Camera 위치 조정
     camera.position.x = 5;
     camera.position.z = 0;
@@ -112,7 +112,7 @@ function init() {
 	roadTexture.repeat.set(100, 1);
 
     // Road Object - 모델이 약 2분동안 달릴수 있게 설정
-    const RoadGeomtery = new THREE.BoxGeometry(2000, 1, 10);
+    const RoadGeomtery = new THREE.BoxGeometry(2000, 1, 15);
     const RoadMeterial = new THREE.MeshBasicMaterial({ 
 		map: roadTexture,
 		roughness: 0.5,
