@@ -104,9 +104,20 @@ function init() {
     });
     const starField = new THREE.Points(starGeometry, material);
 
+	// Road Texture - 길 모양 텍스처를 불러오는 부분
+	const textureLoader = new THREE.TextureLoader();
+	const roadTexture = textureLoader.load('./src/imgs/roadTexture.png');
+	roadTexture.wrapS = THREE.RepeatWrapping;
+	roadTexture.wrapT = THREE.RepeatWrapping;
+	roadTexture.repeat.set(100, 1);
+
     // Road Object - 모델이 약 2분동안 달릴수 있게 설정
     const RoadGeomtery = new THREE.BoxGeometry(2000, 1, 10);
-    const RoadMeterial = new THREE.MeshBasicMaterial({ color: 'white' });
+    const RoadMeterial = new THREE.MeshBasicMaterial({ 
+		map: roadTexture,
+		roughness: 0.5,
+		metalness: 0.5,
+	});
     const roadMesh = new THREE.Mesh(RoadGeomtery, RoadMeterial);
     roadMesh.position.x = -999;
 
@@ -247,7 +258,7 @@ function init() {
         // 도로 움직이는 애니메이션
         const elapsedTime = clock.getElapsedTime();
         roadMesh.position.x += elapsedTime * 0.01;
-        console.log(roadMesh.position.x);
+        // console.log(roadMesh.position.x);
         renderer.render(scene, camera);
 
         id = requestAnimationFrame(meshAnimate);
