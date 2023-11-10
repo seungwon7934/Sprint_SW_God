@@ -48,7 +48,7 @@ dirLight.shadow.camera.right = 120;
 scene.add(dirLight);
 
 // Camera 변수
-const camera = new THREE.PerspectiveCamera(90, window.innerWidth / window.innerHeight, 1, 500);
+const camera = new THREE.PerspectiveCamera(90, window.innerWidth / window.innerHeight, 3, 500);
 
 // Camera 위치 조정
 camera.position.x = 5;
@@ -159,6 +159,7 @@ let mouseHandler = document.getElementById("canvas");
 // });
 
 // 시작
+
 ready();
 // setTimeout(() => {
 //     sprint_sw_god();
@@ -390,13 +391,30 @@ function sprint_sw_god() {
     // const starField = new THREE.Points(starGeometry, material);
 
     // Road Texture - 길 모양 텍스처를 불러오는 부분
+    
+    const problemGroup = new THREE.Group();
+    const numOfProlblem = 10;
+    for(let i = 1; i <= numOfProlblem; i++){
+        const problemGeometry = new THREE.BoxGeometry(100, 50, 1)
+        const problemMaterial = new THREE.MeshBasicMaterial({
+            color: 0xffffff
+        });
+        const problemMesh = new THREE.Mesh(problemGeometry, problemMaterial);
+        problemMesh.position.x = - i * 500;
+        problemMesh.position.y = 40;
+        problemMesh.position.z = 0;
+        problemMesh.lookAt(new THREE.Vector3(5, 10, 0))
+        problemGroup.add(problemMesh);
+    }
+    scene.add(problemGroup);
+
     const textureLoader = new THREE.TextureLoader();
     const roadTexture = textureLoader.load('./src/imgs/roadTexture.png');
     roadTexture.wrapS = THREE.RepeatWrapping;
     roadTexture.wrapT = THREE.RepeatWrapping;
     roadTexture.repeat.set(100, 1);
 
-    var roadDistance = 10000
+    var roadDistance = 20000
     // Road Object - 모델이 약 2분동안 달릴수 있게 설정
     const RoadGeomtery = new THREE.BoxGeometry(roadDistance, 1, 15);
     const RoadMeterial = new THREE.MeshBasicMaterial({
@@ -405,10 +423,9 @@ function sprint_sw_god() {
         metalness: 0.5,
     });
     const roadMesh = new THREE.Mesh(RoadGeomtery, RoadMeterial);
-    roadMesh.position.x = -roadDistance / 2 + 1;
+    roadMesh.position.x = -roadDistance / 2 + 1 ;
 
     // Add to camera
-    // scene.add(starField);
     scene.add(roadMesh);
 
     // 모델 호출
@@ -463,65 +480,80 @@ function sprint_sw_god() {
     function render() {
         rot += 0.1;
         // 각도 변환
-        const radian = rot * (Math.PI / 180);
-
-        // 각도 변화에 따른 카메라 위치 설정
-        // camera.position.x = 1000 * Math.sin(radian);
-        // camera.position.z = 1000 * Math.cos(radian);
-
-        // // 원점
-        // camera.lookAt(new THREE.Vector3(0.0, 0.0, 0.0))
+        const radian = rot * (Math.PI / 180)
 
         // 카메라 시점 변환 업데이트
         orbitControls.update();
 
         // 눈 - Mesh가 움직임, 약 2분가량 동작 후 재시작
         starField.position.y = 9500 * Math.cos(radian / 4 % Math.PI);
-
         // 우주여행
         // starField.position.x = -9500 * Math.cos(radian / 4 % Math.PI);
-
-        camera.lookAt(new THREE.Vector3(-2, 7, 0));
+        
+        camera.lookAt(new THREE.Vector3(-10, 5, 0));
         updatePlayer();
-
+        
         // 렌더링
         renderer.render(scene, camera);
-        requestAnimationFrame(render);
+            requestAnimationFrame(render);
     }
     render();
-
+    
     var x;
     // 모델 애니메이션 작동을 위한 함수
     function animate() {
         const delta = clock.getDelta();
         if (mixer) mixer.update(delta);
-
+        
         renderer.render(scene, camera);
         x = requestAnimationFrame(animate);
-
+        
         // road x좌표가 1000이상 증가시 모델 정지
-        if (roadMesh.position.x > roadDistance / 2 - 1)
-            cancelAnimationFrame(x);
-    }
-    animate()
+        if (problemGroup.position.x > 5000){
+            let winMesh;
+            let fontLoader = new FontLoader();
+            fontLoader.load("./src/font/Do Hyeon_Regular.json", (font) => {
+                let winGeometry = new TextGeometry(
+                    "Congratulation!",
+                    {
+                        font: font,
+                        size: 0.7,
+                        height: 0,
+                        curveSegments: 12
+                    }
+                );
+                winGeometry.computeBoundingBox();
+                let winXMid = -0.5 * (winGeometry.boundingBox.max.x - winGeometry.boundingBox.min.x);
+                winGeometry.translate(winXMid, 0, 0);
+        
+                let winMaterial = new THREE.MeshBasicMaterial({
+                    color: 0xffffff,
+                });
+                winMesh = new THREE.Mesh(winGeometry, winMaterial);
+                winMesh.position.y = 11;
+                winMesh.lookAt(new THREE.Vector3(5, 10, 0));
+                scene.add(winMesh);
+            });
+            camera.position.x += 0.02;
+        }
+}
+animate()
 
-    var id;
-    // Mesh 애니메이션 함수
-    function meshAnimate() {
-
-        // 도로 움직이는 애니메이션
-        const elapsedTime = clock.getElapsedTime();
-        roadMesh.position.x += elapsedTime * 0.02;
-        // console.log(roadMesh.position.x);
-        renderer.render(scene, camera);
-
-        id = requestAnimationFrame(meshAnimate);
-
-        // 1000이상 증가시 mesh 정지
+var id;
+// Mesh 애니메이션 함수
+function meshAnimate() {
+    
+    // 도로 움직이는 애니메이션
+    roadMesh.position.x += 1;
+    problemGroup.position.x += 0.7 * 20;
+    renderer.render(scene, camera);
+    id = requestAnimationFrame(meshAnimate);
+    // console.log(problemGroup.position.x);
+    // 1000이상 증가시 mesh 정지
         if (roadMesh.position.x > roadDistance / 2 - 1)
             cancelAnimationFrame(id);
-    }
-    meshAnimate();
+}
+meshAnimate();
 
     // 뚝뚝 끊기는 좌우 이동 함수
     function updatePlayer(currentTime) {
@@ -530,10 +562,10 @@ function sprint_sw_god() {
 
             // 23/11/08 - 좌우 범위 증가 + 좌우 이동시 부드럽게 이동
             if (game.input.right) {
-                if (player.position.z > -5) player.position.z -= 0.1;
+                if (player.position.z > -5) player.position.z -= 0.15;
                 // player.rotation.y = 0.05;
             } else if (game.input.left) {
-                if (player.position.z < 5) player.position.z += 0.1;
+                if (player.position.z < 5) player.position.z += 0.15;
                 // player.rotation.y = -0.05;
             }
         }
@@ -563,6 +595,10 @@ function sprint_sw_god() {
         animateJump();
     }
 }
+
+// 흰 실선 범위
+// -1.5 - 2.5
+// 1.5 - 2.5
 
 // 자연스러운 좌우 이동 (작동에 문제는 없지만, 콘솔에 에러가 떠서 임시 주석처리, 최종본에 이 코드를 사용했을 때 이상 없으면 수정 예정)
 // function updatePlayer(currentTime) {
