@@ -2,22 +2,333 @@ import * as THREE from 'three';
 import { OrbitControls } from './lib/OrbitControls.js';
 import { FBXLoader } from './jsm/loaders/FBXLoader.js';
 import Stats from './jsm/libs/stats.module.js';
+import { FontLoader } from 'https://unpkg.com/three@0.145.0/examples/jsm/loaders/FontLoader.js'
+import { TextGeometry } from 'https://unpkg.com/three@0.145.0/examples/jsm/geometries/TextGeometry.js'
+import gsap from './lib/gsap/index.js'
 
-// 코드 구조
-// init() -> function init() 실행
-// function init() 구조
-// 변수 (시간, 모델 움직임, 캔버스, 렌더링, Scene, Light, Camera, 
+// 실행 절차:
+// ready() -> 글자 클릭시 sprint_sw_god() 시작
+// 코드 구조:
+// 글로벌 변수 - 캔버스, 렌더링, Scene, Light, Camera, 
 // Geometry, material, Mesh, Audio)
+// 로컬 변수
 // 모델 오브젝트 호출
 // 이벤트 리스너 (창 크기조절, 좌우&위 방향키)
 // 함수 (render, 모델 애니메이션, Mesh 애니메이션, 모델 좌우 방향, 점프)
 
 
+// 글로벌 변수 
+// 캔버스 오브젝트
+const container = document.createElement('div');
+document.body.appendChild(container);
+const canvas = document.getElementById("canvas");
+
+
+// Render 변수 
+const renderer = new THREE.WebGLRenderer({
+    canvas: canvas,
+    alpha: true
+});
+
+// Scene 변수
+const scene = new THREE.Scene();
+
+// Light 변수
+const hemiLight = new THREE.HemisphereLight(0xffffff, 0x444444, 5);
+hemiLight.position.set(0, 200, 0);
+scene.add(hemiLight);
+
+const dirLight = new THREE.DirectionalLight(0xffffff, 5);
+dirLight.position.set(0, 200, 100);
+dirLight.castShadow = true;
+dirLight.shadow.camera.top = 180;
+dirLight.shadow.camera.bottom = - 100;
+dirLight.shadow.camera.left = - 120;
+dirLight.shadow.camera.right = 120;
+scene.add(dirLight);
+
+// Camera 변수
+const camera = new THREE.PerspectiveCamera(90, window.innerWidth / window.innerHeight, 1, 500);
+
+// Camera 위치 조정
+camera.position.x = 5;
+camera.position.y = 10;
+camera.position.z = 0;
+
+// AudioListener를 생성하여 카메라에 추가
+const listener = new THREE.AudioListener();
+camera.add(listener);
+
+// 글로벌 오디오 소스 생성
+const sound = new THREE.Audio(listener);
+
+// 사운드를 로드하고 오디오 객체의 버퍼로 설정
+const audioLoader = new THREE.AudioLoader();
+
+audioLoader.load('./src/sounds/Duggy-Colors.ogg', function (buffer) {
+    sound.setBuffer(buffer);
+    sound.setLoop(true);
+    sound.setVolume(0.25);
+    sound.play();
+});
+
+// 눈 생성 
+const starGeometry = new THREE.BufferGeometry();
+const starVertices = new Float32Array(40000 * 3);
+const textureLoader = new THREE.TextureLoader();
+const snowTexture = textureLoader.load("./src/imgs/alphaSnow.jpg");
+
+for (let i = 0; i < 20000; i++) {
+
+    const x = THREE.MathUtils.randFloatSpread(1000);
+    const y = THREE.MathUtils.randFloatSpread(20000);
+    const z = THREE.MathUtils.randFloatSpread(1000);
+
+    const offset = i * 3;
+
+    starVertices[offset] = x;
+    starVertices[offset + 1] = y;
+    starVertices[offset + 2] = z;
+}
+
+starGeometry.setAttribute('position', new THREE.BufferAttribute(starVertices, 3));
+const material = new THREE.PointsMaterial({});
+material.size = 4;
+material.transparent = true;
+material.alphaMap = snowTexture;
+material.depthTest = false;
+const starField = new THREE.Points(starGeometry, material);
+scene.add(starField);
+
+// AxesHelper - xyz축 표시, 실제 영상에서는 제외
+const axexHelper = new THREE.AxesHelper(4);
+scene.add(axexHelper);
+
+// OrbitControls - 카메라 위치, 각도 조정 (마우스)
+const orbitControls = new OrbitControls(camera, canvas);
+
+// 사용자가 카메라 임의로 수정 금지
+orbitControls.enableRotate = false;
+orbitControls.enableZoom = false;
+orbitControls.enablePan = false;
+
+// EventHandler
+let mouseHandler = document.getElementById("canvas");
+
+// window.addEventListener("mousedown", (e) => {
+//     pointer.x = (e.clientX / window.innerWidth) * 2 - 1;
+//     pointer.y = -(e.clientY / window.innerHeight) * 2 + 1;
+//     raycaster.setFromCamera(pointer, camera);
+//     const intersects = raycaster.intersectObjects(scene.children);
+//     if(intersects.length > 0){
+//         if(oneIntersectMesh.length < 1){
+//             oneIntersectMesh.push(intersects[0]);
+//         }
+//         console.log(oneIntersectMesh);
+//         textMesh.visible = false;
+//         startMesh.visible = false;
+//         sprint_sw_god();
+//     }
+// }, {once: true})
+
+// window.addEventListener("mousemove",(e) => {
+//     pointer.x = (e.clientX / window.innerWidth) * 2 - 1;
+//     pointer.y = -(e.clientY / window.innerHeight) * 2 + 1;
+//     raycaster.setFromCamera(pointer, camera);
+//     const intersects = raycaster.intersectObjects(scene.children);
+//     if(intersects.length > 0){
+//         if(oneIntersectMesh.length < 1){
+//             oneIntersectMesh.push(intersects[0]);
+//         }
+//         console.log(oneIntersectMesh);
+//         gsap.to(oneIntersectMesh[0].object.scale, {
+//             duration: 0.5,
+//             x: 1.25,
+//             y: 1.25,
+//             z: 1.25
+//         })
+//     } else if(oneIntersectMesh[0]!== undefined){
+//         gsap.to(oneIntersectMesh[0].object.scale, {
+//             duration: 0.5,
+//             x: 1,
+//             y: 1,
+//             z: 1
+//         })
+//         oneIntersectMesh.shift();
+//     }
+// });
+
 // 시작
-init();
+ready();
+// setTimeout(() => {
+//     sprint_sw_god();
+// }, 1000)
+// start();
 
-function init() {
+function ready() {
 
+    // 마우스 감지
+    const raycaster = new THREE.Raycaster();
+    const pointer = new THREE.Vector2();
+    const oneIntersectMesh = [];
+
+    // 텍스트 띄우는 코드
+    let fontLoader = new FontLoader();
+    fontLoader.load("./src/font/Do Hyeon_Regular.json", (font) => {
+        let textGeometry = new TextGeometry(
+            "Sprint SW Runner",
+            {
+                font: font,
+                size: 0.7,
+                height: 0,
+                curveSegments: 12
+            }
+        );
+        textGeometry.computeBoundingBox();
+        let testXMid = -0.5 * (textGeometry.boundingBox.max.x - textGeometry.boundingBox.min.x);
+        textGeometry.translate(testXMid, 0, 0);
+
+        let textMaterial = new THREE.MeshBasicMaterial({
+            color: 0xffffff,
+            wireframe: true
+        });
+        const textMesh = new THREE.Mesh(textGeometry, textMaterial);
+        textMesh.position.y = 10;
+        textMesh.lookAt(new THREE.Vector3(5, 10, 0));
+        scene.add(textMesh);
+
+        // 메쉬 안보이게하는 코드
+        // textMesh.visible = false;
+
+        let startGeometry = new TextGeometry(
+            "Start!",
+            {
+                font: font,
+                size: 0.7,
+                height: 0,
+                curveSegments: 12
+            }
+        );
+        startGeometry.computeBoundingBox();
+        let startXMid = -0.5 * (startGeometry.boundingBox.max.x - startGeometry.boundingBox.min.x);
+        startGeometry.translate(startXMid, 0, 0);
+
+        let startMaterial = new THREE.MeshBasicMaterial({
+            color: 0x8b00ff
+        });
+        const startMesh = new THREE.Mesh(startGeometry, startMaterial);
+        startMesh.position.x = 2;
+        startMesh.position.y = 8;
+        startMesh.lookAt(new THREE.Vector3(5, 10, 0));
+        scene.add(startMesh);
+
+        // 마우스가 텍스트에 닿으면 텍스트 커짐
+        function mousemoveListener(e) {
+            pointer.x = (e.clientX / window.innerWidth) * 2 - 1;
+            pointer.y = -(e.clientY / window.innerHeight) * 2 + 1;
+            raycaster.setFromCamera(pointer, camera);
+            const intersects = raycaster.intersectObjects(scene.children);
+            if (intersects.length > 0) {
+                if (oneIntersectMesh.length < 1) {
+                    oneIntersectMesh.push(intersects[0]);
+                }
+                console.log(oneIntersectMesh);
+                gsap.to(oneIntersectMesh[0].object.scale, {
+                    duration: 0.5,
+                    x: 1.25,
+                    y: 1.25,
+                    z: 1.25
+                })
+            } else if (oneIntersectMesh[0] !== undefined) {
+                gsap.to(oneIntersectMesh[0].object.scale, {
+                    duration: 0.5,
+                    x: 1,
+                    y: 1,
+                    z: 1
+                })
+                oneIntersectMesh.shift();
+            }
+        }
+
+        // 텍스트 클릭시 시작하는 코드
+        function mousedownListener(e) {
+            pointer.x = (e.clientX / window.innerWidth) * 2 - 1;
+            pointer.y = -(e.clientY / window.innerHeight) * 2 + 1;
+            raycaster.setFromCamera(pointer, camera);
+            const intersects = raycaster.intersectObjects(scene.children);
+            if (intersects.length > 0) {
+                if (oneIntersectMesh.length < 1) {
+                    oneIntersectMesh.push(intersects[0]);
+                }
+                console.log(oneIntersectMesh);
+                // 텍스트 안보이게 + 이벤트리스너 삭제 + 달리기로 넘어감
+                textMesh.visible = false;
+                startMesh.visible = false;
+                mouseHandler.removeEventListener("mousemove", mousemoveListener);
+                mouseHandler.removeEventListener("mousedown", mousedownListener);
+                sprint_sw_god();
+            }
+            Option.once = true;
+        }
+
+        // 이벤트 등록
+        mouseHandler.addEventListener("mousemove", mousemoveListener);
+        mouseHandler.addEventListener("mousedown", mousedownListener);
+
+    });
+
+    // 창 크기조절 이벤트
+    window.addEventListener("resize", onResize);
+    onResize();
+
+    var rot = 0;
+    function render() {
+        rot += 0.1;
+        // 각도 변환
+        const radian = rot * (Math.PI / 180);
+
+        // 각도 변화에 따른 카메라 위치 설정
+        // camera.position.x = 1000 * Math.sin(radian);
+        // camera.position.z = 1000 * Math.cos(radian);
+
+        // // 원점
+        // camera.lookAt(new THREE.Vector3(0.0, 0.0, 0.0))
+
+        // 카메라 시점 변환 업데이트
+        orbitControls.update();
+
+        // 눈 - Mesh가 움직임, 약 2분가량 동작 후 재시작
+        starField.position.y = 9500 * Math.cos(radian / 4 % Math.PI);
+
+        // 우주여행
+        // starField.position.x = -9500 * Math.cos(radian / 4 % Math.PI);
+
+        camera.lookAt(new THREE.Vector3(-2, 7, 0));
+
+        // 렌더링
+        renderer.render(scene, camera);
+        requestAnimationFrame(render);
+    }
+    render();
+}
+
+function onResize() {
+    // 현재 크기
+    const width = window.innerWidth;
+    const height = window.innerHeight;
+
+    // 렌더링에서의 크기 조정
+    renderer.setPixelRatio(window.devicePixelRatio);
+    renderer.setSize(width, height);
+
+
+    // 카메라에서의 비율 조정
+    camera.aspect = width / height;
+    camera.updateProjectionMatrix();
+}
+
+
+function sprint_sw_god() {
     // 애니메이션 변화를 위한 time 변수 
     const clock = new THREE.Clock();
 
@@ -32,41 +343,15 @@ function init() {
         input: { left: false, right: false }
     };
 
-    // 캔버스 오브젝트
-    const container = document.createElement('div');
-    document.body.appendChild(container);
-    const canvas = document.getElementById("canvas");
-
-
-    // Render 변수 
-    const renderer = new THREE.WebGLRenderer({
-        canvas: canvas,
-        alpha: true
-    });
-
-    // Scene 변수
-    const scene = new THREE.Scene();
-
-    // Light 변수
-    const hemiLight = new THREE.HemisphereLight(0xffffff, 0x444444, 5);
-    hemiLight.position.set(0, 200, 0);
-    scene.add(hemiLight);
-
-    const dirLight = new THREE.DirectionalLight(0xffffff, 5);
-    dirLight.position.set(0, 200, 100);
-    dirLight.castShadow = true;
-    dirLight.shadow.camera.top = 180;
-    dirLight.shadow.camera.bottom = - 100;
-    dirLight.shadow.camera.left = - 120;
-    dirLight.shadow.camera.right = 120;
-    scene.add(dirLight);
+    // // Scene 변수
+    // const scene = new THREE.Scene();
 
     // Camera 변수
-    const camera = new THREE.PerspectiveCamera(90, window.innerWidth / window.innerHeight, 1, 500);
-    // Camera 위치 조정
-    camera.position.x = 5;
-    camera.position.z = 0;
-    camera.position.y = 10;
+    // const camera = new THREE.PerspectiveCamera(90, window.innerWidth / window.innerHeight, 1, 500);
+    // // Camera 위치 조정
+    // camera.position.x = 5;
+    // camera.position.y = 10;
+    // camera.position.z = 0;
 
     // Geometry
     // const geometry = new THREE.Geometry();
@@ -81,77 +366,50 @@ function init() {
     //     geometry.vertices.push(star)
     // }
 
-    // Star Object
-    const starGeometry = new THREE.BufferGeometry();
-    const starVertices = new Float32Array(40000 * 3);
+    // // Star Object
+    // const starGeometry = new THREE.BufferGeometry();
+    // const starVertices = new Float32Array(40000 * 3);
 
-    for (let i = 0; i < 20000; i++) {
+    // for (let i = 0; i < 20000; i++) {
 
-        const x = THREE.MathUtils.randFloatSpread(1000);
-        const y = THREE.MathUtils.randFloatSpread(20000);
-        const z = THREE.MathUtils.randFloatSpread(1000);
+    //     const x = THREE.MathUtils.randFloatSpread(1000);
+    //     const y = THREE.MathUtils.randFloatSpread(20000);
+    //     const z = THREE.MathUtils.randFloatSpread(1000);
 
-        const offset = i * 3;
+    //     const offset = i * 3;
 
-        starVertices[offset] = x;
-        starVertices[offset + 1] = y;
-        starVertices[offset + 2] = z;
-    }
+    //     starVertices[offset] = x;
+    //     starVertices[offset + 1] = y;
+    //     starVertices[offset + 2] = z;
+    // }
 
-    starGeometry.setAttribute('position', new THREE.BufferAttribute(starVertices, 3));
-    const material = new THREE.PointsMaterial({
-        color: 0xffffff
-    });
-    const starField = new THREE.Points(starGeometry, material);
+    // starGeometry.setAttribute('position', new THREE.BufferAttribute(starVertices, 3));
+    // const material = new THREE.PointsMaterial({
+    //     color: 0xffffff
+    // });
+    // const starField = new THREE.Points(starGeometry, material);
 
-	// Road Texture - 길 모양 텍스처를 불러오는 부분
-	const textureLoader = new THREE.TextureLoader();
-	const roadTexture = textureLoader.load('./src/imgs/roadTexture.png');
-	roadTexture.wrapS = THREE.RepeatWrapping;
-	roadTexture.wrapT = THREE.RepeatWrapping;
-	roadTexture.repeat.set(100, 1);
+    // Road Texture - 길 모양 텍스처를 불러오는 부분
+    const textureLoader = new THREE.TextureLoader();
+    const roadTexture = textureLoader.load('./src/imgs/roadTexture.png');
+    roadTexture.wrapS = THREE.RepeatWrapping;
+    roadTexture.wrapT = THREE.RepeatWrapping;
+    roadTexture.repeat.set(100, 1);
 
+    var roadDistance = 10000
     // Road Object - 모델이 약 2분동안 달릴수 있게 설정
-    const RoadGeomtery = new THREE.BoxGeometry(2000, 1, 15);
-    const RoadMeterial = new THREE.MeshBasicMaterial({ 
-		map: roadTexture,
-		roughness: 0.5,
-		metalness: 0.5,
-	});
+    const RoadGeomtery = new THREE.BoxGeometry(roadDistance, 1, 15);
+    const RoadMeterial = new THREE.MeshBasicMaterial({
+        map: roadTexture,
+        roughness: 0.5,
+        metalness: 0.5,
+    });
     const roadMesh = new THREE.Mesh(RoadGeomtery, RoadMeterial);
-    roadMesh.position.x = -999;
+    roadMesh.position.x = -roadDistance / 2 + 1;
 
     // Add to camera
-    scene.add(starField);
+    // scene.add(starField);
     scene.add(roadMesh);
-
-    // AxesHelper - xyz축 표시, 실제 영상에서는 제외
-    const axexHelper = new THREE.AxesHelper(4);
-    scene.add(axexHelper)
-
-    // OrbitControls - 카메라 위치, 각도 조정 (마우스)
-    const orbitControls = new OrbitControls(camera, canvas);
-    // 사용자가 카메라 임의로 수정 금지
-    orbitControls.enableRotate = false;
-    orbitControls.enableZoom = false;
-    orbitControls.enablePan = false;
-
-    // AudioListener를 생성하여 카메라에 추가
-    const listener = new THREE.AudioListener();
-    camera.add(listener);
-
-    // 글로벌 오디오 소스 생성
-    const sound = new THREE.Audio(listener);
-
-    // 사운드를 로드하고 오디오 객체의 버퍼로 설정
-    const audioLoader = new THREE.AudioLoader();
-    audioLoader.load('./src/sounds/Duggy-Colors.ogg', function (buffer) {
-        sound.setBuffer(buffer);
-        sound.setLoop(true);
-        sound.setVolume(0.25);
-        sound.play();
-    });
-
 
     // 모델 호출
     const loader = new FBXLoader();
@@ -170,10 +428,18 @@ function init() {
     });
 
     // 키보드 좌, 우, 윗방향키 클릭 시 모델 위치 수정을 위한 이벤트 리스너
+    // keydown - keyup 같이 수정해줘야함
+    // A,D,W 키 추가 - 23/11/10
     document.addEventListener('keydown', function (event) {
         if (event.keyCode === 37) game.input.left = true;
         if (event.keyCode === 39) game.input.right = true;
         if (event.keyCode === 38) {
+            if (player.position.y == 0.5) jumpPlayer();
+        }
+
+        if (event.keyCode === 65) game.input.left = true;
+        if (event.keyCode === 68) game.input.right = true;
+        if (event.keyCode === 87) {
             if (player.position.y == 0.5) jumpPlayer();
         }
     });
@@ -181,25 +447,14 @@ function init() {
     document.addEventListener('keyup', function (event) {
         if (event.keyCode === 37) game.input.left = false;
         if (event.keyCode === 39) game.input.right = false;
+        
+        if (event.keyCode === 65) game.input.left = false;
+        if (event.keyCode === 68) game.input.right = false;
+
     });
 
     // 창 크기조절 이벤트
     window.addEventListener("resize", onResize);
-
-    function onResize() {
-        // 현재 크기
-        const width = window.innerWidth;
-        const height = window.innerHeight;
-
-        // 렌더링에서의 크기 조정
-        renderer.setPixelRatio(window.devicePixelRatio);
-        renderer.setSize(width, height);
-
-
-        // 카메라에서의 비율 조정
-        camera.aspect = width / height;
-        camera.updateProjectionMatrix();
-    }
     onResize();
 
     // 각도계산을 위해 필요한 변수 선언
@@ -225,7 +480,7 @@ function init() {
 
         // 우주여행
         // starField.position.x = -9500 * Math.cos(radian / 4 % Math.PI);
-        
+
         camera.lookAt(new THREE.Vector3(-2, 7, 0));
         updatePlayer();
 
@@ -243,10 +498,10 @@ function init() {
 
         renderer.render(scene, camera);
         x = requestAnimationFrame(animate);
-        
+
         // road x좌표가 1000이상 증가시 모델 정지
-        if(roadMesh.position.x > 1000)
-        cancelAnimationFrame(x);
+        if (roadMesh.position.x > roadDistance / 2 - 1)
+            cancelAnimationFrame(x);
     }
     animate()
 
@@ -254,17 +509,16 @@ function init() {
     // Mesh 애니메이션 함수
     function meshAnimate() {
 
-        
         // 도로 움직이는 애니메이션
         const elapsedTime = clock.getElapsedTime();
-        roadMesh.position.x += elapsedTime * 0.01;
+        roadMesh.position.x += elapsedTime * 0.02;
         // console.log(roadMesh.position.x);
         renderer.render(scene, camera);
 
         id = requestAnimationFrame(meshAnimate);
 
         // 1000이상 증가시 mesh 정지
-        if(roadMesh.position.x > 1000)
+        if (roadMesh.position.x > roadDistance / 2 - 1)
             cancelAnimationFrame(id);
     }
     meshAnimate();
@@ -276,10 +530,10 @@ function init() {
 
             // 23/11/08 - 좌우 범위 증가 + 좌우 이동시 부드럽게 이동
             if (game.input.right) {
-                if (player.position.z > -4) player.position.z -= 0.1;
+                if (player.position.z > -5) player.position.z -= 0.1;
                 // player.rotation.y = 0.05;
             } else if (game.input.left) {
-                if (player.position.z < 4) player.position.z += 0.1;
+                if (player.position.z < 5) player.position.z += 0.1;
                 // player.rotation.y = -0.05;
             }
         }
