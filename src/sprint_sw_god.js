@@ -5,6 +5,7 @@ import Stats from './jsm/libs/stats.module.js';
 import { FontLoader } from 'https://unpkg.com/three@0.145.0/examples/jsm/loaders/FontLoader.js'
 import { TextGeometry } from 'https://unpkg.com/three@0.145.0/examples/jsm/geometries/TextGeometry.js'
 import gsap from './lib/gsap/index.js'
+import { createRoadSign } from './objects/roadsign.js';
 
 // 실행 절차:
 // ready() -> 글자 클릭시 sprint_sw_god() 시작
@@ -410,6 +411,10 @@ function sprint_sw_god() {
     // Add to camera
     // scene.add(starField);
     scene.add(roadMesh);
+	
+	// RoadSign - 길가의 표지판을 세워놓는 함수 (별도의 js파일로 캡슐화시켜서 (./objects/roadsign.js에 있음)사용)
+	const roadSigns = createRoadSign();
+	scene.add(roadSigns)
 
     // 모델 호출
     const loader = new FBXLoader();
@@ -512,6 +517,7 @@ function sprint_sw_god() {
         // 도로 움직이는 애니메이션
         const elapsedTime = clock.getElapsedTime();
         roadMesh.position.x += elapsedTime * 0.02;
+		roadSigns.position.x += elapsedTime * 0.02;
         // console.log(roadMesh.position.x);
         renderer.render(scene, camera);
 
