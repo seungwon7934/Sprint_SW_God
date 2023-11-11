@@ -160,6 +160,9 @@ let mouseHandler = document.getElementById("canvas");
 
 // 시작
 
+// default 모델 스킨
+var modelPath = 'models/fbx/Running (2).fbx';
+
 ready();
 // setTimeout(() => {
 //     sprint_sw_god();
@@ -198,6 +201,58 @@ function ready() {
         textMesh.lookAt(new THREE.Vector3(5, 10, 0));
         scene.add(textMesh);
 
+
+        // 스킨 선택 : 제임스
+        let modelJamesGeometry = new TextGeometry(
+            "James",
+            {
+                font: font,
+                size: 0.5,
+                height: 0,
+                curveSegments: 12
+            }
+        );
+        modelJamesGeometry.computeBoundingBox();
+        let modelJamesXMid = -0.5 * (modelJamesGeometry.boundingBox.max.x - modelJamesGeometry.boundingBox.min.x);
+        modelJamesGeometry.translate(modelJamesXMid, 0, 0);
+
+        let modelJamesMaterial = new THREE.MeshBasicMaterial({
+            color: 0xffffff,
+            wireframe: true
+        });
+        const modelJamesMesh = new THREE.Mesh(modelJamesGeometry, modelJamesMaterial);
+        modelJamesMesh.position.y = 9;
+    
+        modelJamesMesh.lookAt(new THREE.Vector3(5, 10, 0));
+        scene.add(modelJamesMesh);
+
+        // 스킨 선택 : 레미
+        let modelRemyGeometry = new TextGeometry(
+            "Remy",
+            {
+                font: font,
+                size: 0.5,
+                height: 0,
+                curveSegments: 12
+            }
+        );
+        modelRemyGeometry.computeBoundingBox();
+        let modelRemyXMid = -0.5 * (modelRemyGeometry.boundingBox.max.x - modelRemyGeometry.boundingBox.min.x);
+        modelRemyGeometry.translate(modelRemyXMid, 0, 0);
+
+        let modelRemyMaterial = new THREE.MeshBasicMaterial({
+            color: 0xffffff,
+            wireframe: true
+        });
+        const modelRemyMesh = new THREE.Mesh(modelRemyGeometry, modelRemyMaterial);
+        modelRemyMesh.position.y = 8;
+        
+        
+        modelRemyMesh.lookAt(new THREE.Vector3(5, 10, 0));
+        scene.add(modelRemyMesh);
+
+
+
         // 메쉬 안보이게하는 코드
         // textMesh.visible = false;
 
@@ -219,7 +274,7 @@ function ready() {
         });
         const startMesh = new THREE.Mesh(startGeometry, startMaterial);
         startMesh.position.x = 2;
-        startMesh.position.y = 8;
+        startMesh.position.y = 7;
         startMesh.lookAt(new THREE.Vector3(5, 10, 0));
         scene.add(startMesh);
 
@@ -262,20 +317,51 @@ function ready() {
                     oneIntersectMesh.push(intersects[0]);
                 }
                 console.log(oneIntersectMesh);
-                // 텍스트 안보이게 + 이벤트리스너 삭제 + 달리기로 넘어감
-                textMesh.visible = false;
-                startMesh.visible = false;
-                mouseHandler.removeEventListener("mousemove", mousemoveListener);
-                mouseHandler.removeEventListener("mousedown", mousedownListener);
-                sprint_sw_god();
+
+                // 각 버튼에 대한 처리
+                if (oneIntersectMesh[0].object === textMesh) {
+                    textMesh.visible = false;
+                    startMesh.visible = false;
+                    modelJamesMesh.visible = false;
+                    modelRemyMesh.visible = false;
+
+                    mouseHandler.removeEventListener("mousemove", mousemoveListener);
+                    mouseHandler.removeEventListener("mousedown", mousedownListener);
+                    sprint_sw_god();
+                    Option.once = true;
+                } else if (oneIntersectMesh[0].object === modelJamesMesh) {
+                    modelPath = 'models/fbx/Running (1).fbx';
+                }
+                else if (oneIntersectMesh[0].object === modelRemyMesh) {
+                    modelPath = 'models/fbx/Running (2).fbx';
+                }   
+                 else if (oneIntersectMesh[0].object === startMesh) {
+                    textMesh.visible = false;
+                    startMesh.visible = false;
+                    modelJamesMesh.visible = false;
+                    modelRemyMesh.visible = false;
+
+                    mouseHandler.removeEventListener("mousemove", mousemoveListener);
+                    mouseHandler.removeEventListener("mousedown", mousedownListener);
+                    sprint_sw_god();
+                    Option.once = true;
+                }
+
+                // 공통 처리
+                // textMesh.visible = false;
+                // startMesh.visible = false;
+                // textMesh2.visible = false;
+
+                // mouseHandler.removeEventListener("mousemove", mousemoveListener);
+                // mouseHandler.removeEventListener("mousedown", mousedownListener);
+                // sprint_sw_god();
+                // Option.once = true;
             }
-            Option.once = true;
         }
 
         // 이벤트 등록
         mouseHandler.addEventListener("mousemove", mousemoveListener);
         mouseHandler.addEventListener("mousedown", mousedownListener);
-
     });
 
     // 창 크기조절 이벤트
@@ -428,11 +514,13 @@ function sprint_sw_god() {
     // Add to camera
     scene.add(roadMesh);
 
+    // const modelPath = 'models/fbx/Running (2).fbx';
     // 모델 호출
     const loader = new FBXLoader();
-    loader.load('models/fbx/Running (2).fbx', function (object) {
+    loader.load(modelPath, function (object) {
         object.position.set(0, 0.5, 0);
-        object.scale.set(0.01, 0.01, 0.01);
+        if (modelPath == 'models/fbx/Running (2).fbx') object.scale.set(0.01, 0.01, 0.01);
+        if (modelPath == 'models/fbx/Running (1).fbx') object.scale.set(0.02, 0.02, 0.02);
 
         object.rotation.y = -7.8;
         mixer = new THREE.AnimationMixer(object);
