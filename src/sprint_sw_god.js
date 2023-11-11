@@ -678,7 +678,7 @@ function sprint_sw_god() {
         // 도로 움직이는 애니메이션
         roadMesh.position.x += 1;
         roadSigns.position.x += 1;
-        problemGroup.position.x += 0.5 * 10;
+        problemGroup.position.x += 0.5;
         console.log(problemGroup.position.x);
         renderer.render(scene, camera);
 
