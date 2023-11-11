@@ -678,7 +678,7 @@ function sprint_sw_god() {
         // 도로 움직이는 애니메이션
         roadMesh.position.x += 1;
         roadSigns.position.x += 1;
-        problemGroup.position.x += 0.5 * 10;
+        problemGroup.position.x += 0.5;
         console.log(problemGroup.position.x);
         renderer.render(scene, camera);
 
@@ -775,10 +775,6 @@ function sprint_sw_god() {
         animateJump();
     }
 }
-
-// 흰 실선 범위
-// -1.5 - 2.5
-// 1.5 - 2.5
 
 // 자연스러운 좌우 이동 (작동에 문제는 없지만, 콘솔에 에러가 떠서 임시 주석처리, 최종본에 이 코드를 사용했을 때 이상 없으면 수정 예정)
 // function updatePlayer(currentTime) {
