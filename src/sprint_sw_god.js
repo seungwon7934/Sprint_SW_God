@@ -56,28 +56,11 @@ camera.position.x = 5;
 camera.position.y = 10;
 camera.position.z = 0;
 
-// AudioListener를 생성하여 카메라에 추가
-const listener = new THREE.AudioListener();
-camera.add(listener);
-
-// 글로벌 오디오 소스 생성
-const sound = new THREE.Audio(listener);
-
-// 사운드를 로드하고 오디오 객체의 버퍼로 설정
-const audioLoader = new THREE.AudioLoader();
-
-audioLoader.load('./src/sounds/Duggy-Colors.ogg', function (buffer) {
-    sound.setBuffer(buffer);
-    sound.setLoop(true);
-    sound.setVolume(0.25);
-    sound.play();
-});
-
 // 눈 생성 
 const starGeometry = new THREE.BufferGeometry();
 const starVertices = new Float32Array(40000 * 3);
-const textureLoader = new THREE.TextureLoader();
-const snowTexture = textureLoader.load("./src/imgs/alphaSnow.jpg");
+const snowTextureLoader = new THREE.TextureLoader();
+const snowTexture = snowTextureLoader.load("./src/imgs/alphaSnow.jpg");
 
 for (let i = 0; i < 20000; i++) {
 
@@ -112,6 +95,49 @@ const orbitControls = new OrbitControls(camera, canvas);
 orbitControls.enableRotate = false;
 orbitControls.enableZoom = false;
 orbitControls.enablePan = false;
+
+const problemGroup = new THREE.Group();
+const numOfProlblem = 10;
+for (let i = 1; i <= numOfProlblem; i++) {
+    const problemGeometry = new THREE.BoxGeometry(200, 100, 1)
+    const problemMaterial = new THREE.MeshBasicMaterial({
+    });
+    const problemMesh = new THREE.Mesh(problemGeometry, problemMaterial);
+    const problemTextureLoader = new THREE.TextureLoader();
+    const problemTexture = problemTextureLoader.load("./src/problems/p" + i + ".png");
+    problemMesh.position.x = - i * 500;
+    problemMesh.position.y = 80;
+    problemMesh.position.z = 0;
+    problemMaterial.map = problemTexture;
+    problemMesh.lookAt(new THREE.Vector3(5, 40, 0))
+    problemGroup.add(problemMesh);
+}
+scene.add(problemGroup);
+
+// Road Texture - 길 모양 텍스처를 불러오는 부분
+const textureLoader = new THREE.TextureLoader();
+const roadTexture = textureLoader.load('./src/imgs/roadTexture.png');
+roadTexture.wrapS = THREE.RepeatWrapping;
+roadTexture.wrapT = THREE.RepeatWrapping;
+roadTexture.repeat.set(100, 1);
+
+var roadDistance = 20000
+// Road Object - 모델이 약 2분동안 달릴수 있게 설정
+const RoadGeomtery = new THREE.BoxGeometry(roadDistance, 1, 15);
+const RoadMeterial = new THREE.MeshBasicMaterial({
+    map: roadTexture,
+    roughness: 0.5,
+    metalness: 0.5,
+});
+const roadMesh = new THREE.Mesh(RoadGeomtery, RoadMeterial);
+roadMesh.position.x = -roadDistance / 2 + 1;
+
+// Add to camera
+scene.add(roadMesh);
+
+// RoadSign - 길가의 표지판을 세워놓는 함수 (별도의 js파일로 캡슐화시켜서 (./objects/roadsign.js에 있음)사용)
+const roadSigns = createRoadSign();
+scene.add(roadSigns)
 
 // EventHandler
 let mouseHandler = document.getElementById("canvas");
@@ -159,11 +185,21 @@ let mouseHandler = document.getElementById("canvas");
 //     }
 // });
 
-// 시작
+// 모델 자연스러운 좌우 움직임을 위한 변수
+let lastUpdateTime = 0;
+const updateInterval = 1; // 1초
+const movementSpeed = 0.05;
+var targetZ, currentZ;
+let mixer;
+var player;
+var game = {
+    input: { left: false, right: false }
+};
 
 // default 모델 스킨
 var modelPath = 'models/fbx/Running (2).fbx';
 
+// 시작
 ready();
 // setTimeout(() => {
 //     sprint_sw_god();
@@ -198,6 +234,7 @@ function ready() {
             wireframe: true
         });
         const textMesh = new THREE.Mesh(textGeometry, textMaterial);
+        textMesh.position.x = 10;
         textMesh.position.y = 10;
         textMesh.lookAt(new THREE.Vector3(5, 10, 0));
         scene.add(textMesh);
@@ -219,11 +256,11 @@ function ready() {
 
         let modelJamesMaterial = new THREE.MeshBasicMaterial({
             color: 0xffffff,
-            wireframe: true
         });
         const modelJamesMesh = new THREE.Mesh(modelJamesGeometry, modelJamesMaterial);
+        modelJamesMesh.position.x = 10;
         modelJamesMesh.position.y = 9;
-    
+
         modelJamesMesh.lookAt(new THREE.Vector3(5, 10, 0));
         scene.add(modelJamesMesh);
 
@@ -243,19 +280,14 @@ function ready() {
 
         let modelRemyMaterial = new THREE.MeshBasicMaterial({
             color: 0xffffff,
-            wireframe: true
         });
         const modelRemyMesh = new THREE.Mesh(modelRemyGeometry, modelRemyMaterial);
+        modelRemyMesh.position.x = 10;
         modelRemyMesh.position.y = 8;
-        
-        
+
+
         modelRemyMesh.lookAt(new THREE.Vector3(5, 10, 0));
         scene.add(modelRemyMesh);
-
-
-
-        // 메쉬 안보이게하는 코드
-        // textMesh.visible = false;
 
         let startGeometry = new TextGeometry(
             "Start!",
@@ -274,8 +306,8 @@ function ready() {
             color: 0x8b00ff
         });
         const startMesh = new THREE.Mesh(startGeometry, startMaterial);
-        startMesh.position.x = 2;
-        startMesh.position.y = 7;
+        startMesh.position.x = 10;
+        startMesh.position.y = 6;
         startMesh.lookAt(new THREE.Vector3(5, 10, 0));
         scene.add(startMesh);
 
@@ -321,22 +353,70 @@ function ready() {
 
                 // 각 버튼에 대한 처리
                 if (oneIntersectMesh[0].object === textMesh) {
-                    textMesh.visible = false;
-                    startMesh.visible = false;
-                    modelJamesMesh.visible = false;
-                    modelRemyMesh.visible = false;
 
-                    mouseHandler.removeEventListener("mousemove", mousemoveListener);
-                    mouseHandler.removeEventListener("mousedown", mousedownListener);
-                    sprint_sw_god();
-                    Option.once = true;
+                    // textMesh.visible = false;
+                    // startMesh.visible = false;
+                    // modelJamesMesh.visible = false;
+                    // modelRemyMesh.visible = false;
+
+                    // mouseHandler.removeEventListener("mousemove", mousemoveListener);
+                    // mouseHandler.removeEventListener("mousedown", mousedownListener);
+                    // sprint_sw_god();
+                    // Option.once = true;
                 } else if (oneIntersectMesh[0].object === modelJamesMesh) {
                     modelPath = 'models/fbx/Running (1).fbx';
                 }
                 else if (oneIntersectMesh[0].object === modelRemyMesh) {
                     modelPath = 'models/fbx/Running (2).fbx';
-                }   
-                 else if (oneIntersectMesh[0].object === startMesh) {
+                }
+                else if (oneIntersectMesh[0].object === startMesh) {
+                    let fontLoader = new FontLoader();
+                    fontLoader.load("./src/font/Do Hyeon_Regular.json", (font) => {
+                        let loadingGeometry = new TextGeometry(
+                            "Loading ...",
+                            {
+                                font: font,
+                                size: 0.7,
+                                height: 0,
+                                curveSegments: 12
+                            }
+                        );
+                        loadingGeometry.computeBoundingBox();
+                        let testXMid = -0.5 * (loadingGeometry.boundingBox.max.x - loadingGeometry.boundingBox.min.x);
+                        loadingGeometry.translate(testXMid, 0, 0);
+
+                        let loadingMaterial = new THREE.MeshBasicMaterial({
+                            color: 0x000000
+                        });
+                        let loadingMesh = new THREE.Mesh(loadingGeometry, loadingMaterial);
+                        loadingMesh.position.x = 10;
+                        loadingMesh.position.y = 9;
+                        loadingMesh.lookAt(new THREE.Vector3(5, 10, 0));
+                        scene.add(loadingMesh);
+
+                        // 게임 끝났을 때 안보이게
+                        setTimeout(() => {
+                            loadingMesh.visible = false;
+                        }, 10000)
+                    })
+
+                    // AudioListener를 생성하여 카메라에 추가
+                    const listener = new THREE.AudioListener();
+                    camera.add(listener);
+
+                    // 글로벌 오디오 소스 생성
+                    const sound = new THREE.Audio(listener);
+
+                    // 사운드를 로드하고 오디오 객체의 버퍼로 설정
+                    const audioLoader = new THREE.AudioLoader();
+
+                    audioLoader.load('./src/sounds/Duggy-Colors.ogg', function (buffer) {
+                        sound.setBuffer(buffer);
+                        sound.setLoop(true);
+                        sound.setVolume(0.25);
+                        sound.play();
+                    });
+                    // 안보이게 
                     textMesh.visible = false;
                     startMesh.visible = false;
                     modelJamesMesh.visible = false;
@@ -344,8 +424,9 @@ function ready() {
 
                     mouseHandler.removeEventListener("mousemove", mousemoveListener);
                     mouseHandler.removeEventListener("mousedown", mousedownListener);
-                    sprint_sw_god();
                     Option.once = true;
+
+                    load_model();
                 }
 
                 // 공통 처리
@@ -391,7 +472,7 @@ function ready() {
         // 우주여행
         // starField.position.x = -9500 * Math.cos(radian / 4 % Math.PI);
 
-        camera.lookAt(new THREE.Vector3(-2, 7, 0));
+        camera.lookAt(new THREE.Vector3(10, 7, 0));
 
         // 렌더링
         renderer.render(scene, camera);
@@ -415,21 +496,38 @@ function onResize() {
     camera.updateProjectionMatrix();
 }
 
+function load_model() {
+
+    problemGroup.visible = false;
+    roadMesh.visible = false;
+    roadSigns.visible = false;
+    // const modelPath = 'models/fbx/Running (2).fbx';
+    // 모델 호출
+    const loader = new FBXLoader();
+    loader.load(modelPath, function (object) {
+        object.position.set(0, 0.5, 0);
+        if (modelPath == 'models/fbx/Running (2).fbx') object.scale.set(0.01, 0.01, 0.01);
+        if (modelPath == 'models/fbx/Running (1).fbx') object.scale.set(0.02, 0.02, 0.02);
+
+        object.rotation.y = -7.8;
+        mixer = new THREE.AnimationMixer(object);
+
+        const action = mixer.clipAction(object.animations[0]);
+        action.play();
+
+        player = object;
+        scene.add(player);
+        sprint_sw_god();
+        problemGroup.visible = true;
+        roadMesh.visible = true;
+        roadSigns.visible = true;
+    });
+}
 
 function sprint_sw_god() {
+
     // 애니메이션 변화를 위한 time 변수 
     const clock = new THREE.Clock();
-
-    // 모델 자연스러운 좌우 움직임을 위한 변수
-    let lastUpdateTime = 0;
-    const updateInterval = 1; // 1초
-    const movementSpeed = 0.05;
-    var targetZ, currentZ;
-    let mixer;
-    var player;
-    var game = {
-        input: { left: false, right: false }
-    };
 
     // // Scene 변수
     // const scene = new THREE.Scene();
@@ -477,66 +575,6 @@ function sprint_sw_god() {
     // });
     // const starField = new THREE.Points(starGeometry, material);
 
-    // Road Texture - 길 모양 텍스처를 불러오는 부분
-    
-    const problemGroup = new THREE.Group();
-    const numOfProlblem = 10;
-    for(let i = 1; i <= numOfProlblem; i++){
-        const problemGeometry = new THREE.BoxGeometry(100, 50, 1)
-        const problemMaterial = new THREE.MeshBasicMaterial({
-            color: 0xffffff
-        });
-        const problemMesh = new THREE.Mesh(problemGeometry, problemMaterial);
-        problemMesh.position.x = - i * 500;
-        problemMesh.position.y = 40;
-        problemMesh.position.z = 0;
-        problemMesh.lookAt(new THREE.Vector3(5, 10, 0))
-        problemGroup.add(problemMesh);
-    }
-    scene.add(problemGroup);
-
-    const textureLoader = new THREE.TextureLoader();
-    const roadTexture = textureLoader.load('./src/imgs/roadTexture.png');
-    roadTexture.wrapS = THREE.RepeatWrapping;
-    roadTexture.wrapT = THREE.RepeatWrapping;
-    roadTexture.repeat.set(100, 1);
-
-    var roadDistance = 20000
-    // Road Object - 모델이 약 2분동안 달릴수 있게 설정
-    const RoadGeomtery = new THREE.BoxGeometry(roadDistance, 1, 15);
-    const RoadMeterial = new THREE.MeshBasicMaterial({
-        map: roadTexture,
-        roughness: 0.5,
-        metalness: 0.5,
-    });
-    const roadMesh = new THREE.Mesh(RoadGeomtery, RoadMeterial);
-    roadMesh.position.x = -roadDistance / 2 + 1 ;
-
-    // Add to camera
-    scene.add(roadMesh);
-	
-	// RoadSign - 길가의 표지판을 세워놓는 함수 (별도의 js파일로 캡슐화시켜서 (./objects/roadsign.js에 있음)사용)
-	const roadSigns = createRoadSign();
-	scene.add(roadSigns)
-
-    // const modelPath = 'models/fbx/Running (2).fbx';
-    // 모델 호출
-    const loader = new FBXLoader();
-    loader.load(modelPath, function (object) {
-        object.position.set(0, 0.5, 0);
-        if (modelPath == 'models/fbx/Running (2).fbx') object.scale.set(0.01, 0.01, 0.01);
-        if (modelPath == 'models/fbx/Running (1).fbx') object.scale.set(0.02, 0.02, 0.02);
-
-        object.rotation.y = -7.8;
-        mixer = new THREE.AnimationMixer(object);
-
-        const action = mixer.clipAction(object.animations[0]);
-        action.play();
-
-        player = object;
-        scene.add(player);
-    });
-
     // 키보드 좌, 우, 윗방향키 클릭 시 모델 위치 수정을 위한 이벤트 리스너
     // keydown - keyup 같이 수정해줘야함
     // A,D,W 키 추가 - 23/11/10
@@ -557,7 +595,7 @@ function sprint_sw_god() {
     document.addEventListener('keyup', function (event) {
         if (event.keyCode === 37) game.input.left = false;
         if (event.keyCode === 39) game.input.right = false;
-        
+
         if (event.keyCode === 65) game.input.left = false;
         if (event.keyCode === 68) game.input.right = false;
 
@@ -582,27 +620,27 @@ function sprint_sw_god() {
         starField.position.y = 9500 * Math.cos(radian / 4 % Math.PI);
         // 우주여행
         // starField.position.x = -9500 * Math.cos(radian / 4 % Math.PI);
-        
+
         camera.lookAt(new THREE.Vector3(-10, 5, 0));
         updatePlayer();
-        
+
         // 렌더링
         renderer.render(scene, camera);
-            requestAnimationFrame(render);
+        requestAnimationFrame(render);
     }
     render();
-    
+
     var x;
     // 모델 애니메이션 작동을 위한 함수
     function animate() {
         const delta = clock.getDelta();
         if (mixer) mixer.update(delta);
-        
+
         renderer.render(scene, camera);
         x = requestAnimationFrame(animate);
-        
+
         // road x좌표가 1000이상 증가시 모델 정지
-        if (problemGroup.position.x > 5000){
+        if (problemGroup.position.x > 5000) {
             let winMesh;
             let fontLoader = new FontLoader();
             fontLoader.load("./src/font/Do Hyeon_Regular.json", (font) => {
@@ -618,7 +656,7 @@ function sprint_sw_god() {
                 winGeometry.computeBoundingBox();
                 let winXMid = -0.5 * (winGeometry.boundingBox.max.x - winGeometry.boundingBox.min.x);
                 winGeometry.translate(winXMid, 0, 0);
-        
+
                 let winMaterial = new THREE.MeshBasicMaterial({
                     color: 0xffffff,
                 });
@@ -629,27 +667,75 @@ function sprint_sw_god() {
             });
             camera.position.x += 0.02;
         }
-}
-animate()
+    }
+    animate()
 
     var id;
+    var i = 1;
     // Mesh 애니메이션 함수
     function meshAnimate() {
 
         // 도로 움직이는 애니메이션
-        const elapsedTime = clock.getElapsedTime();
-        roadMesh.position.x += elapsedTime * 0.02;
-		roadSigns.position.x += elapsedTime * 0.02;
-        // console.log(roadMesh.position.x);
+        roadMesh.position.x += 1;
+        roadSigns.position.x += 1;
+        problemGroup.position.x += 0.5 * 10;
+        console.log(problemGroup.position.x);
         renderer.render(scene, camera);
 
         id = requestAnimationFrame(meshAnimate);
 
-        // 1000이상 증가시 mesh 정지
+        // 도로 끝까지 달리면 정지
         if (roadMesh.position.x > roadDistance / 2 - 1)
             cancelAnimationFrame(id);
-	}
-	meshAnimate();
+
+        // 문제 정답 체크 - 5.0 ~ 2.5 |2.5 ~ 1.5| 1.5 ~ -1.5 |-1.5 ~ -2.5| -2.5 ~ -5.0
+        // 문제 - 정답 형태
+        // 2, 2, 3, 2, 2, 2, 3, 1, 2, 3
+        if (problemGroup.position.x == i * 500 - 100) {
+            if (i == 8 && player.position.z < 2.5) {
+                retry();
+            }
+            if ((i == 1 || i == 2 || i == 4 || i == 5 || i == 6 || i == 9) && (Math.abs(player.position.z) > 1.5)) {
+                retry();
+            }
+            if ((i == 3 || i == 7 || i == 10) && (player.position.z > -2.5)) {
+                retry();
+            }
+            i++;
+        }
+
+        function retry() {
+
+            problemGroup.visible = false;
+            cancelAnimationFrame(id);
+            let retryMesh;
+            let fontLoader = new FontLoader();
+            fontLoader.load("./src/font/Do Hyeon_Regular.json", (font) => {
+                let retryGeometry = new TextGeometry(
+                    "Game Over",
+                    {
+                        font: font,
+                        size: 0.7,
+                        height: 0,
+                        curveSegments: 12
+                    }
+                );
+                retryGeometry.computeBoundingBox();
+                let retryXMid = -0.5 * (retryGeometry.boundingBox.max.x - retryGeometry.boundingBox.min.x);
+                retryGeometry.translate(retryXMid, 0, 0);
+
+                let retryMaterial = new THREE.MeshBasicMaterial({
+                    color: 0xffffff,
+                });
+                retryMesh = new THREE.Mesh(retryGeometry, retryMaterial);
+                retryMesh.position.x = -4;
+                retryMesh.position.y = 11;
+                retryMesh.lookAt(new THREE.Vector3(5, 10, 0));
+                scene.add(retryMesh);
+            });
+        }
+    }
+    meshAnimate();
 
     // 뚝뚝 끊기는 좌우 이동 함수
     function updatePlayer(currentTime) {
@@ -659,10 +745,8 @@ animate()
             // 23/11/08 - 좌우 범위 증가 + 좌우 이동시 부드럽게 이동
             if (game.input.right) {
                 if (player.position.z > -5) player.position.z -= 0.15;
-                // player.rotation.y = 0.05;
             } else if (game.input.left) {
                 if (player.position.z < 5) player.position.z += 0.15;
-                // player.rotation.y = -0.05;
             }
         }
         requestAnimationFrame(updatePlayer);

@@ -28,19 +28,44 @@ export function createRoadSign() {
 		return signGroupInstance;
 	}
 
+	function createRedSign() {
+		const signGeometry = new THREE.CircleGeometry(signRadius, 32);
+		const signMaterial = new THREE.MeshStandardMaterial({ color: 0xff0000, side: THREE.DoubleSide });
+		const signMesh = new THREE.Mesh(signGeometry, signMaterial);
+		signMesh.position.z += 0.3;
+		signMesh.position.y += 2;
+
+		const poleGeometry = new THREE.CylinderGeometry(poleRadius, poleRadius, poleHeight, 32);
+		const poleMaterial = new THREE.MeshStandardMaterial({ color: 0x00ff00 });
+		const poleMesh = new THREE.Mesh(poleGeometry, poleMaterial);
+		poleMesh.position.y = -signHeight / 2 - poleHeight / 2;
+
+		const signGroupInstance = new THREE.Group();
+		signGroupInstance.add(signMesh);
+		signGroupInstance.add(poleMesh);
+
+		return signGroupInstance;
+	}
+
 	for (let i = 1; i < 100; i++) {
-		const sign = createSign();
+		let sign = createSign();
+		let sign2 = createSign();
+
+		if((i + 2) % 10 == 0){
+			sign = createRedSign();
+			sign2 = createRedSign();
+		}
 		sign.position.z = -7;
 		sign.position.x = -i * 100;
 		sign.position.y += 3;
 		sign.rotation.y = Math.PI / 2;
-		signGroup.add(sign);
 		
-		const sign2 = createSign();
 		sign2.position.z = 7;
 		sign2.position.x = -i * 100;
 		sign2.position.y += 3;
 		sign2.rotation.y = Math.PI / 2;
+
+		signGroup.add(sign);
 		signGroup.add(sign2);
 	}
 	
