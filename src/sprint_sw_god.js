@@ -5,6 +5,7 @@ import Stats from './jsm/libs/stats.module.js';
 import { FontLoader } from 'https://unpkg.com/three@0.145.0/examples/jsm/loaders/FontLoader.js'
 import { TextGeometry } from 'https://unpkg.com/three@0.145.0/examples/jsm/geometries/TextGeometry.js'
 import gsap from './lib/gsap/index.js'
+import { createRoadSign } from './objects/roadsign.js';
 
 // 실행 절차:
 // ready() -> 글자 클릭시 sprint_sw_god() 시작
@@ -513,6 +514,10 @@ function sprint_sw_god() {
 
     // Add to camera
     scene.add(roadMesh);
+	
+	// RoadSign - 길가의 표지판을 세워놓는 함수 (별도의 js파일로 캡슐화시켜서 (./objects/roadsign.js에 있음)사용)
+	const roadSigns = createRoadSign();
+	scene.add(roadSigns)
 
     // const modelPath = 'models/fbx/Running (2).fbx';
     // 모델 호출
@@ -627,21 +632,24 @@ function sprint_sw_god() {
 }
 animate()
 
-var id;
-// Mesh 애니메이션 함수
-function meshAnimate() {
-    
-    // 도로 움직이는 애니메이션
-    roadMesh.position.x += 1;
-    problemGroup.position.x += 0.7 * 20;
-    renderer.render(scene, camera);
-    id = requestAnimationFrame(meshAnimate);
-    // console.log(problemGroup.position.x);
-    // 1000이상 증가시 mesh 정지
+    var id;
+    // Mesh 애니메이션 함수
+    function meshAnimate() {
+
+        // 도로 움직이는 애니메이션
+        const elapsedTime = clock.getElapsedTime();
+        roadMesh.position.x += elapsedTime * 0.02;
+		roadSigns.position.x += elapsedTime * 0.02;
+        // console.log(roadMesh.position.x);
+        renderer.render(scene, camera);
+
+        id = requestAnimationFrame(meshAnimate);
+
+        // 1000이상 증가시 mesh 정지
         if (roadMesh.position.x > roadDistance / 2 - 1)
             cancelAnimationFrame(id);
-}
-meshAnimate();
+	}
+	meshAnimate();
 
     // 뚝뚝 끊기는 좌우 이동 함수
     function updatePlayer(currentTime) {
