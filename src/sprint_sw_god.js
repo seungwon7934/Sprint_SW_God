@@ -84,9 +84,7 @@ material.depthTest = false;
 const starField = new THREE.Points(starGeometry, material);
 scene.add(starField);
 
-// AxesHelper - xyz축 표시, 실제 영상에서는 제외
-const axexHelper = new THREE.AxesHelper(4);
-scene.add(axexHelper);
+
 
 // OrbitControls - 카메라 위치, 각도 조정 (마우스)
 const orbitControls = new OrbitControls(camera, canvas);
