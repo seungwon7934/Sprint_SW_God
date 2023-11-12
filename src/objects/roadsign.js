@@ -71,6 +71,6 @@ export function createRoadSign() {
 	
 	return signGroup;
 
-	// scene.add(signGroup);
+
 	
 }

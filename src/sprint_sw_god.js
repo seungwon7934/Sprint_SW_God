@@ -142,48 +142,6 @@ scene.add(roadSigns)
 // EventHandler
 let mouseHandler = document.getElementById("canvas");
 
-// window.addEventListener("mousedown", (e) => {
-//     pointer.x = (e.clientX / window.innerWidth) * 2 - 1;
-//     pointer.y = -(e.clientY / window.innerHeight) * 2 + 1;
-//     raycaster.setFromCamera(pointer, camera);
-//     const intersects = raycaster.intersectObjects(scene.children);
-//     if(intersects.length > 0){
-//         if(oneIntersectMesh.length < 1){
-//             oneIntersectMesh.push(intersects[0]);
-//         }
-//         console.log(oneIntersectMesh);
-//         textMesh.visible = false;
-//         startMesh.visible = false;
-//         sprint_sw_god();
-//     }
-// }, {once: true})
-
-// window.addEventListener("mousemove",(e) => {
-//     pointer.x = (e.clientX / window.innerWidth) * 2 - 1;
-//     pointer.y = -(e.clientY / window.innerHeight) * 2 + 1;
-//     raycaster.setFromCamera(pointer, camera);
-//     const intersects = raycaster.intersectObjects(scene.children);
-//     if(intersects.length > 0){
-//         if(oneIntersectMesh.length < 1){
-//             oneIntersectMesh.push(intersects[0]);
-//         }
-//         console.log(oneIntersectMesh);
-//         gsap.to(oneIntersectMesh[0].object.scale, {
-//             duration: 0.5,
-//             x: 1.25,
-//             y: 1.25,
-//             z: 1.25
-//         })
-//     } else if(oneIntersectMesh[0]!== undefined){
-//         gsap.to(oneIntersectMesh[0].object.scale, {
-//             duration: 0.5,
-//             x: 1,
-//             y: 1,
-//             z: 1
-//         })
-//         oneIntersectMesh.shift();
-//     }
-// });
 
 // 모델 자연스러운 좌우 움직임을 위한 변수
 let lastUpdateTime = 0;
@@ -201,10 +159,7 @@ var modelPath = 'models/fbx/Running (2).fbx';
 
 // 시작
 ready();
-// setTimeout(() => {
-//     sprint_sw_god();
-// }, 1000)
-// start();
+
 
 function ready() {
 
@@ -354,15 +309,7 @@ function ready() {
                 // 각 버튼에 대한 처리
                 if (oneIntersectMesh[0].object === textMesh) {
 
-                    // textMesh.visible = false;
-                    // startMesh.visible = false;
-                    // modelJamesMesh.visible = false;
-                    // modelRemyMesh.visible = false;
-
-                    // mouseHandler.removeEventListener("mousemove", mousemoveListener);
-                    // mouseHandler.removeEventListener("mousedown", mousedownListener);
-                    // sprint_sw_god();
-                    // Option.once = true;
+                   
                 } else if (oneIntersectMesh[0].object === modelJamesMesh) {
                     modelPath = 'models/fbx/Running (1).fbx';
                 }
@@ -429,15 +376,7 @@ function ready() {
                     load_model();
                 }
 
-                // 공통 처리
-                // textMesh.visible = false;
-                // startMesh.visible = false;
-                // textMesh2.visible = false;
-
-                // mouseHandler.removeEventListener("mousemove", mousemoveListener);
-                // mouseHandler.removeEventListener("mousedown", mousedownListener);
-                // sprint_sw_god();
-                // Option.once = true;
+                
             }
         }
 
@@ -456,12 +395,7 @@ function ready() {
         // 각도 변환
         const radian = rot * (Math.PI / 180);
 
-        // 각도 변화에 따른 카메라 위치 설정
-        // camera.position.x = 1000 * Math.sin(radian);
-        // camera.position.z = 1000 * Math.cos(radian);
-
-        // // 원점
-        // camera.lookAt(new THREE.Vector3(0.0, 0.0, 0.0))
+    
 
         // 카메라 시점 변환 업데이트
         orbitControls.update();
@@ -529,51 +463,6 @@ function sprint_sw_god() {
     // 애니메이션 변화를 위한 time 변수 
     const clock = new THREE.Clock();
 
-    // // Scene 변수
-    // const scene = new THREE.Scene();
-
-    // Camera 변수
-    // const camera = new THREE.PerspectiveCamera(90, window.innerWidth / window.innerHeight, 1, 500);
-    // // Camera 위치 조정
-    // camera.position.x = 5;
-    // camera.position.y = 10;
-    // camera.position.z = 0;
-
-    // Geometry
-    // const geometry = new THREE.Geometry();
-
-    // for (let i = 0; i < 40000; i++) {
-    //     const star = new THREE.Vector3();
-    //     // 눈) x : 2000, y : 20000, 우주 여행) x : 20000, y : 2000
-    //     star.x = THREE.Math.randFloatSpread(2000);
-    //     star.y = THREE.Math.randFloatSpread(20000);
-    //     star.z = THREE.Math.randFloatSpread(2000);
-
-    //     geometry.vertices.push(star)
-    // }
-
-    // // Star Object
-    // const starGeometry = new THREE.BufferGeometry();
-    // const starVertices = new Float32Array(40000 * 3);
-
-    // for (let i = 0; i < 20000; i++) {
-
-    //     const x = THREE.MathUtils.randFloatSpread(1000);
-    //     const y = THREE.MathUtils.randFloatSpread(20000);
-    //     const z = THREE.MathUtils.randFloatSpread(1000);
-
-    //     const offset = i * 3;
-
-    //     starVertices[offset] = x;
-    //     starVertices[offset + 1] = y;
-    //     starVertices[offset + 2] = z;
-    // }
-
-    // starGeometry.setAttribute('position', new THREE.BufferAttribute(starVertices, 3));
-    // const material = new THREE.PointsMaterial({
-    //     color: 0xffffff
-    // });
-    // const starField = new THREE.Points(starGeometry, material);
 
     // 키보드 좌, 우, 윗방향키 클릭 시 모델 위치 수정을 위한 이벤트 리스너
     // keydown - keyup 같이 수정해줘야함
@@ -775,51 +664,3 @@ function sprint_sw_god() {
         animateJump();
     }
 }
-
-// 자연스러운 좌우 이동 (작동에 문제는 없지만, 콘솔에 에러가 떠서 임시 주석처리, 최종본에 이 코드를 사용했을 때 이상 없으면 수정 예정)
-// function updatePlayer(currentTime) {
-
-
-//     if (currentTime - lastUpdateTime >= updateInterval) {
-//          targetZ = player.position.z; // 목표 위치
-//          currentZ = player.position.z;
-//         lastUpdateTime = currentTime;
-
-//         if (game.input.right && targetZ > -1.5) {
-//             targetZ -= 1.5;
-//         } else if (game.input.left && targetZ < 1.5) {
-//             targetZ += 1.5;
-//         }
-
-//         // 서서히 위치를 변경
-//         if (currentZ < targetZ) {
-//             currentZ = Math.min(currentZ + movementSpeed, targetZ);
-//         } else if (currentZ > targetZ) {
-//             currentZ = Math.max(currentZ - movementSpeed, targetZ);
-//         }
-
-//         player.position.z = currentZ;
-//         // player.rotation.y = 0.05;
-//     }
-
-//     // 다음 프레임을 요청
-//     requestAnimationFrame(updatePlayer);
-// }
-
-// requestAnimationFrame(updatePlayer);
-
-// // 모델 애니메이션 작동을 위한 함수
-// function animate() {
-
-//     const delta = clock.getDelta();
-
-//     if (mixer) mixer.update(delta);
-
-//     // 도로 움직이는 애니메이션 - 작동 안됨
-
-//     // const elapsedTime = clock.getElapsedTime();
-//     // if(roadMesh) roadMesh.rotation.x = elapsedTime * Math.PI * 0.25;
-
-//     requestAnimationFrame(animate);
-
-// }
